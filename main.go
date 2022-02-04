@@ -14,32 +14,33 @@ import (
 )
 
 var (
-	err error
-)
-
-const (
-	removeCount = 6
-	redactCount = 65
+	err         error
+	redactCount int
+	removeCount int
 )
 
 func main() {
 	var (
 		targetPath   string
 		parsedValues string
-		rawJson      []byte
 	)
-	filePath := flag.String("file", "", "path to file with concated jsonl")
+
+	flag.IntVar(&redactCount, "redactCount", 65, "count how much from dorked files is shown")
+	flag.IntVar(&removeCount, "removeCount", 5, "count after which fuzzing results will be cut off")
 	flag.Parse()
 
-	// Only for testing purposes
-	file, err := os.Open(*filePath)
-	if err != nil {
-		log.Fatalf("could not open the file: %v", err)
-	}
-	defer file.Close()
+	// FOr testing
+	//filePath := flag.String("file", "", "path to file with concated jsonl")
+	//
+	//// Only for testing purposes
+	//file, err := os.Open(*filePath)
+	//if err != nil {
+	//	log.Fatalf("could not open the file: %v", err)
+	//}
+	//defer file.Close()
 
 	// Read big JSONL
-	reader := bufio.NewReader(file) //os.Stdin
+	reader := bufio.NewReader(os.Stdin) //os.Stdin
 	for {
 		line, err := read(reader)
 		if err != nil {
@@ -48,23 +49,57 @@ func main() {
 			}
 			log.Fatalf("error happened here: %v\n", err)
 		}
-		rawJson = append(rawJson, line...)
-	}
+		//rawJson = append(rawJson, line...)
+		if strings.Contains(string(line[0:50]), "{\"commandline\":\"ffuf") {
+			// Ffuf results
+			parsedValues = parseFfufJson(line)
 
-	if strings.Contains(string(rawJson[0:50]), "{\"commandline\":\"ffuf") {
-		// Ffuf results
-		parsedValues = parseFfufJson(rawJson)
-
-	} else if strings.Contains(string(rawJson[0:50]), "{\"branch\":") {
-		targetPath, err = os.Getwd()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error getting current dir: "+err.Error())
+		} else if strings.Contains(string(line[0:50]), "{\"branch\":") {
+			targetPath, err = os.Getwd()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error getting current dir: "+err.Error())
+			}
+			// TruffleHog results
+			parsedValues = parseTruffleHogJson(line, targetPath)
 		}
-		// TruffleHog results
-		parsedValues = parseTruffleHogJson(rawJson, targetPath)
+		if parsedValues != "" {
+			fmt.Println(parsedValues)
+		}
 	}
-	fmt.Println(parsedValues)
-	fmt.Println("version1.12")
+}
+
+func parseTruffleHogJson(values []byte, p string) string {
+	type TruffleHogResults struct {
+		Branch       string   `json:"branch"`
+		Date         string   `json:"date"`
+		Path         string   `json:"path"`
+		CommitHash   string   `json:"commitHash"`
+		PrintDiff    string   `json:"printDiff"`
+		Reason       string   `json:"reason"`
+		StringsFound []string `json:"stringsFound"`
+	}
+	var (
+		ret    string
+		result TruffleHogResults
+	)
+
+	json.Unmarshal(values, &result)
+
+	ret += result.PrintDiff + " | "
+	ret += result.Branch + " | "
+	ret += result.CommitHash + " | "
+	ret += result.Date + " | "
+	ret += pathP.Base(p) + "/" + result.Path + " | "
+	for _, str := range result.StringsFound {
+		if len(str) > redactCount {
+			ret += strings.TrimSpace(str[:redactCount]) + " <redacted> | "
+		} else {
+			ret += strings.TrimSpace(str) + " | "
+		}
+	}
+	ret += "\n"
+
+	return ret
 }
 
 func parseFfufJson(values []byte) string {
@@ -94,47 +129,6 @@ func parseFfufJson(values []byte) string {
 	retList = RemoveEmpty(retList)
 
 	return strings.Join(retList, "\n")
-}
-
-func parseTruffleHogJson(values []byte, p string) string {
-	type TruffleHogResults struct {
-		Branch     string `json:"branch"`
-		Date       string `json:"date"`
-		Path       string `json:"path"`
-		CommitHash string `json:"commitHash"`
-		PrintDiff  string `json:"printDiff"`
-		//Reason       string   `json:"reason"`
-		StringsFound []string `json:"stringsFound"`
-	}
-	var (
-		ret            string
-		splittedDorked []string
-	)
-	results := make([]TruffleHogResults, 0)
-	json.Unmarshal(values, &results)
-
-	for _, result := range results {
-		ret += result.PrintDiff + " | "
-		ret += result.Branch + " | "
-		ret += result.CommitHash + " | "
-		ret += result.Date + " | "
-		ret += pathP.Base(p) + "/" + result.Path + " | "
-		for _, str := range result.StringsFound {
-			if len(str) > redactCount {
-				ret += strings.TrimSpace(str[:redactCount]) + " <redacted> | "
-			} else {
-				ret += strings.TrimSpace(str) + " | "
-			}
-		}
-		ret += "\n"
-	}
-
-	splittedDorked = strings.Split(ret, "\n")
-
-	// remove empty lines
-	splittedDorked = RemoveEmpty(splittedDorked)
-
-	return strings.Join(splittedDorked, "\n")
 }
 
 func filterFuzzed(fuzzResults string) []string {
