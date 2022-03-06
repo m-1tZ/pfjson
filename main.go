@@ -40,7 +40,7 @@ func main() {
 	//defer file.Close()
 
 	// Read big JSONL
-	reader := bufio.NewReader(os.Stdin) //os.Stdin
+	reader := bufio.NewReader(os.Stdin)
 	for {
 		line, err := read(reader)
 		if err != nil {
@@ -86,10 +86,9 @@ func parseTruffleHogJson(values []byte, p string) string {
 	json.Unmarshal(values, &result)
 
 	ret += result.PrintDiff + " | "
-	ret += result.Branch + " | "
-	ret += result.CommitHash + " | "
 	ret += result.Date + " | "
-	ret += pathP.Base(p) + "/" + result.Path + " | "
+	ret += result.CommitHash + " | "
+	ret += pathP.Base(p) + " | " + result.Branch + " | " + result.Path + " | "
 	for _, str := range result.StringsFound {
 		if len(str) > redactCount {
 			ret += strings.TrimSpace(str[:redactCount]) + " <redacted> | "
