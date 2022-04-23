@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
-	pathP "path"
 	"strconv"
 	"strings"
 )
@@ -20,19 +19,15 @@ var (
 )
 
 func main() {
-	var (
-		targetPath   string
-		parsedValues string
-	)
+	var parsedValues string
 
 	flag.IntVar(&redactCount, "redactCount", 65, "count how much from dorked files is shown")
 	flag.IntVar(&removeCount, "removeCount", 5, "count after which fuzzing results will be cut off")
-	flag.Parse()
-
 	// FOr testing
 	//filePath := flag.String("file", "", "path to file with concated jsonl")
-	//
-	//// Only for testing purposes
+	flag.Parse()
+
+	// Only for testing purposes
 	//file, err := os.Open(*filePath)
 	//if err != nil {
 	//	log.Fatalf("could not open the file: %v", err)
@@ -54,13 +49,12 @@ func main() {
 			// Ffuf results
 			parsedValues = parseFfufJson(line)
 
-		} else if strings.Contains(string(line[0:50]), "{\"branch\":") {
-			targetPath, err = os.Getwd()
+		} else if strings.Contains(string(line[0:50]), "{\"SourceMetadata\":") {
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error getting current dir: "+err.Error())
 			}
 			// TruffleHog results
-			parsedValues = parseTruffleHogJson(line, targetPath)
+			parsedValues = parseTruffleHogJson(line)
 		}
 		if parsedValues != "" {
 			fmt.Println(parsedValues)
@@ -68,15 +62,24 @@ func main() {
 	}
 }
 
-func parseTruffleHogJson(values []byte, p string) string {
+func parseTruffleHogJson(values []byte) string {
+	type Git struct {
+		Commit     string `json:"commit"`
+		File       string `json:"file"`
+		Repository string `json:"repository"`
+		Timestamp  string `json:"timestamp"`
+		Line       int    `json:"line"`
+	}
+	type Data struct {
+		Gitdata Git `json:"Git"`
+	}
+	type SourceMetadata struct {
+		Dat Data `json:"Data"`
+	}
 	type TruffleHogResults struct {
-		Branch       string   `json:"branch"`
-		Date         string   `json:"date"`
-		Path         string   `json:"path"`
-		CommitHash   string   `json:"commitHash"`
-		PrintDiff    string   `json:"printDiff"`
-		Reason       string   `json:"reason"`
-		StringsFound []string `json:"stringsFound"`
+		SM           SourceMetadata `json:"SourceMetadata"`
+		DetectorType int            `json:"DetectorType"`
+		Raw          string         `json:"Raw"`
 	}
 	var (
 		ret    string
@@ -85,17 +88,16 @@ func parseTruffleHogJson(values []byte, p string) string {
 
 	json.Unmarshal(values, &result)
 
-	ret += result.PrintDiff + " | "
-	ret += result.Date + " | "
-	ret += result.CommitHash + " | "
-	ret += pathP.Base(p) + " | " + result.Branch + " | " + result.Path + " | "
-	for _, str := range result.StringsFound {
-		if len(str) > redactCount {
-			ret += strings.TrimSpace(str[:redactCount]) + " <redacted> | "
-		} else {
-			ret += strings.TrimSpace(str) + " | "
-		}
+	if len(result.Raw) > redactCount {
+		ret += strings.TrimSpace((result.Raw[:redactCount]) + " <redacted> | ")
+	} else {
+		ret += strings.TrimSpace((result.Raw) + " | ")
 	}
+	ret += strconv.Itoa(result.DetectorType) + " | "
+	ret += result.SM.Dat.Gitdata.Timestamp + " | "
+	ret += result.SM.Dat.Gitdata.Repository + " | "
+	ret += result.SM.Dat.Gitdata.File + " | "
+	ret += result.SM.Dat.Gitdata.Commit
 	ret += "\n"
 
 	return ret
