@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -22,20 +23,20 @@ func main() {
 	var parsedValues string
 
 	flag.IntVar(&redactCount, "redactCount", 65, "count how much from dorked files is shown")
-	flag.IntVar(&removeCount, "removeCount", 5, "count after which fuzzing results will be cut off")
+	flag.IntVar(&removeCount, "removeCount", 3, "count after which fuzzing results will be cut off")
 	// FOr testing
-	//filePath := flag.String("file", "", "path to file with concated jsonl")
+	filePath := flag.String("file", "", "path to file with concated jsonl")
 	flag.Parse()
 
 	// Only for testing purposes
-	//file, err := os.Open(*filePath)
-	//if err != nil {
-	//	log.Fatalf("could not open the file: %v", err)
-	//}
-	//defer file.Close()
+	file, err := os.Open(*filePath)
+	if err != nil {
+		log.Fatalf("could not open the file: %v", err)
+	}
+	defer file.Close()
 
 	// Read big JSONL
-	reader := bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(file) //os.Stdin or file for testing
 	for {
 		line, err := read(reader)
 		if err != nil {
@@ -47,14 +48,16 @@ func main() {
 		//rawJson = append(rawJson, line...)
 		if strings.Contains(string(line[0:50]), "{\"commandline\":\"ffuf") {
 			// Ffuf results
-			parsedValues = parseFfufJson(line)
+			parsedValues = parseFfufJSON(line)
 
-		} else if strings.Contains(string(line[0:50]), "{\"SourceMetadata\":") {
+		} else if strings.Contains(string(line[0:50]), "{\"SourceMetadata\":{\"Data\":{\"Github\"") {
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error getting current dir: "+err.Error())
 			}
 			// TruffleHog results
-			parsedValues = parseTruffleHogJson(line)
+			parsedValues = parseTruffleHogJSON(line)
+		} else {
+			fmt.Println("[-] No supported input type was found (supported: trufflehog-Github, ffuf)")
 		}
 		if parsedValues != "" {
 			fmt.Println(parsedValues)
@@ -62,16 +65,14 @@ func main() {
 	}
 }
 
-func parseTruffleHogJson(values []byte) string {
-	type Git struct {
-		Commit     string `json:"commit"`
-		File       string `json:"file"`
-		Repository string `json:"repository"`
-		Timestamp  string `json:"timestamp"`
-		Line       int    `json:"line"`
+func parseTruffleHogJSON(values []byte) string {
+	type Github struct {
+		Link      string `json:"link"`
+		Timestamp string `json:"timestamp"`
+		Line      int    `json:"line"`
 	}
 	type Data struct {
-		Gitdata Git `json:"Git"`
+		Gitdata Github `json:"Github"`
 	}
 	type SourceMetadata struct {
 		Dat Data `json:"Data"`
@@ -88,22 +89,20 @@ func parseTruffleHogJson(values []byte) string {
 
 	json.Unmarshal(values, &result)
 
+	ret += result.SM.Dat.Gitdata.Link + " | "
 	if len(result.Raw) > redactCount {
 		ret += strings.TrimSpace((result.Raw[:redactCount]) + " <redacted> | ")
 	} else {
 		ret += strings.TrimSpace((result.Raw) + " | ")
 	}
-	ret += strconv.Itoa(result.DetectorType) + " | "
 	ret += result.SM.Dat.Gitdata.Timestamp + " | "
-	ret += result.SM.Dat.Gitdata.Repository + " | "
-	ret += result.SM.Dat.Gitdata.File + " | "
-	ret += result.SM.Dat.Gitdata.Commit
+	ret += strconv.Itoa(result.SM.Dat.Gitdata.Line)
 	ret += "\n"
 
 	return ret
 }
 
-func parseFfufJson(values []byte) string {
+func parseFfufJSON(values []byte) string {
 	type FfufResult struct {
 		Url    string `json:"url"`
 		Status int    `json:"status"`
@@ -123,7 +122,7 @@ func parseFfufJson(values []byte) string {
 		ret += strconv.Itoa(result.Status) + " "
 		ret += strconv.Itoa(result.Words) + "\n"
 	}
-
+	fmt.Println(ret)
 	retList = filterFuzzed(ret)
 
 	// remove empty lines
