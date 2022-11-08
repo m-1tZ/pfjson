@@ -79,7 +79,7 @@ func parseTruffleHogJSON(values []byte) string {
 	}
 	type TruffleHogResults struct {
 		SM           SourceMetadata `json:"SourceMetadata"`
-		DetectorType int            `json:"DetectorType"`
+		DetectorName string         `json:"DetectorName"`
 		Raw          string         `json:"Raw"`
 	}
 	var (
@@ -89,13 +89,14 @@ func parseTruffleHogJSON(values []byte) string {
 
 	json.Unmarshal(values, &result)
 
+	ret += result.DetectorName + " | "
 	ret += result.SM.Dat.Gitdata.Link + " | "
 	if len(result.Raw) > redactCount {
 		ret += strings.TrimSpace((result.Raw[:redactCount]) + " <redacted> | ")
 	} else {
 		ret += strings.TrimSpace((result.Raw) + " | ")
 	}
-	ret += result.SM.Dat.Gitdata.Timestamp + " | "
+	//ret += result.SM.Dat.Gitdata.Timestamp + " | "
 	ret += strconv.Itoa(result.SM.Dat.Gitdata.Line)
 	ret += "\n"
 
