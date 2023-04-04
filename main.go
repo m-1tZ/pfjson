@@ -22,9 +22,9 @@ var (
 func main() {
 	var parsedValues string
 
-	flag.IntVar(&redactCount, "redactCount", 65, "count how much from dorked files is shown")
-	flag.IntVar(&removeCount, "removeCount", 3, "count after which fuzzing results will be cut off")
-	// FOr testing
+	flag.IntVar(&redactCount, "redactCount", 65, "(default 65) count how much from trufflehog dorked files is shown")
+	flag.IntVar(&removeCount, "removeCount", 5, "(default 5) count after which ffuf results will be cut off")
+	// For testing
 	//filePath := flag.String("file", "", "path to file with concated jsonl")
 	flag.Parse()
 
@@ -57,7 +57,7 @@ func main() {
 			// TruffleHog results
 			parsedValues = parseTruffleHogJSON(line)
 		} else {
-			fmt.Println("[-] No supported input type was found (supported: trufflehog-Github, ffuf)")
+			fmt.Println("[-] No supported input type was found (supported: trufflehog-dork, ffuf)")
 		}
 		if parsedValues != "" {
 			fmt.Println(parsedValues)
@@ -107,7 +107,7 @@ func parseFfufJSON(values []byte) string {
 	type FfufResult struct {
 		Url    string `json:"url"`
 		Status int    `json:"status"`
-		Words  int    `json:"words"`
+		Length int    `json:"length"`
 	}
 	type FfufResults struct {
 		Results []FfufResult `json:"results"`
@@ -121,7 +121,7 @@ func parseFfufJSON(values []byte) string {
 	for _, result := range results.Results {
 		ret += result.Url + " "
 		ret += strconv.Itoa(result.Status) + " "
-		ret += strconv.Itoa(result.Words) + "\n"
+		ret += strconv.Itoa(result.Length) + "\n"
 	}
 	fmt.Println(ret)
 	retList = filterFuzzed(ret)
