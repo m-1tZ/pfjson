@@ -46,11 +46,11 @@ func main() {
 			log.Fatalf("error happened here: %v\n", err)
 		}
 		//rawJson = append(rawJson, line...)
-		if strings.Contains(string(line[0:50]), "{\"commandline\":\"ffuf") {
+		if strings.Contains(string(line[0:50]), "{\"commandline\":\"") {
 			// Ffuf results
 			parsedValues = parseFfufJSON(line)
 
-		} else if strings.Contains(string(line[0:50]), "{\"SourceMetadata\":{\"Data\":{\"Github\"") {
+		} else if strings.Contains(string(line[0:50]), "{\"SourceMetadata\":{\"Data\":{\"") {
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error getting current dir: "+err.Error())
 			}
