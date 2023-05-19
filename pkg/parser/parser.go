@@ -77,8 +77,8 @@ func ParseFfufJSON(values []byte, removeCount int) string {
 
 	for _, result := range results {
 		for _, item := range result.Results {
-			ret += strconv.Itoa(item.Length) + " "
 			ret += strconv.Itoa(item.Status) + " "
+			ret += strconv.Itoa(item.Length) + " "
 			ret += item.Url + "\n"
 		}
 	}

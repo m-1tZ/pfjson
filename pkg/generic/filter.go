@@ -27,7 +27,7 @@ func FilterFuzzed(fuzzResults string, removeCount int) []string {
 	}()
 
 	for _, line := range splittedJson {
-		// line "http://bestivalvr.redbull.com/HTTPClntRecv/* 403 13"
+		// line "403 13 http://bestivalvr.redbull.com/HTTPClntRecv/*"
 		// remove "  " possible empty slice fields
 		items = RemoveEmpty(strings.Split(line, " "))
 		if len(items) != 3 {
@@ -35,7 +35,7 @@ func FilterFuzzed(fuzzResults string, removeCount int) []string {
 			continue
 		}
 		// 403 13
-		item = items[1] + " " + items[2]
+		item = items[0] + " " + items[1]
 		// check if 403 13 already occurs, if so then update counter
 		if _, found := toRemove[item]; found {
 			toRemove[item]++
@@ -52,7 +52,7 @@ func FilterFuzzed(fuzzResults string, removeCount int) []string {
 			continue
 		}
 		// 403 13
-		item = items[1] + " " + items[2]
+		item = items[0] + " " + items[1]
 		// if entry exist and if entry count is higher than remove_count, omit
 		if _, found := toRemove[item]; found && removeCount > toRemove[item] {
 			filteredResults = append(filteredResults, line)
