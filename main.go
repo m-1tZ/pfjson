@@ -27,18 +27,18 @@ func main() {
 	flag.IntVar(&redactCount, "redactCount", 65, "count how much from trufflehog dorked files is shown")
 	flag.IntVar(&removeCount, "removeCount", 5, "count after which ffuf results will be cut off")
 	// For testing
-	filePath := flag.String("file", "", "path to file with concated jsonl")
+	//filePath := flag.String("file", "", "path to file with concated jsonl")
 	flag.Parse()
 
 	// Only for testing purposes
-	file, err := os.Open(*filePath)
-	if err != nil {
-		log.Fatalf("could not open the file: %v", err)
-	}
-	defer file.Close()
+	// file, err := os.Open(*filePath)
+	// if err != nil {
+	// 	log.Fatalf("could not open the file: %v", err)
+	// }
+	// defer file.Close()
 
 	// Read big JSONL
-	reader := bufio.NewReader(file) //os.Stdin or file for testing
+	reader := bufio.NewReader(os.Stdin) //os.Stdin or file for testing
 	for {
 		line, err := generic.Read(reader)
 		if err != nil {
