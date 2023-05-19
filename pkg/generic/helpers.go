@@ -4,8 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"net/url"
-
-	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
 func RemoveEmpty(s []string) []string {
@@ -46,24 +45,27 @@ func BlobToSlice(blob []byte) ([]byte, error) {
 }
 
 func AddDelimiterToSlice(slice []string) ([]string, error) {
+	// 403 112 https://asdf.com
 	var newSlice []string
-	for key, item := range slice {
+	var item string
+	for key, line := range slice {
+		item = strings.Split(line, " ")[2]
 		if key == 0 {
 			newSlice = append(newSlice, item)
 			continue
 		}
 
-		before := slice[key-1]
-		current := slice[key]
+		before := strings.Split(slice[key-1], " ")[2]
+		current := strings.Split(slice[key], " ")[2]
 
 		urlBefore, err := url.Parse(before)
 		if err != nil {
-			log.Error(err.Error())
+			return []string{}, err
 		}
 
 		urlCurrent, err := url.Parse(current)
 		if err != nil {
-			log.Error(err.Error())
+			return []string{}, err
 		}
 
 		if urlBefore.Hostname() != urlCurrent.Hostname() {
