@@ -47,9 +47,7 @@ func BlobToSlice(blob []byte) ([]byte, error) {
 func AddDelimiterToSlice(slice []string) ([]string, error) {
 	// 403 112 https://asdf.com
 	var newSlice []string
-	var item string
-	for key, line := range slice {
-		item = strings.Split(line, " ")[2]
+	for key, item := range slice {
 		if key == 0 {
 			newSlice = append(newSlice, item)
 			continue
