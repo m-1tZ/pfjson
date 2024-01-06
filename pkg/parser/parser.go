@@ -35,9 +35,9 @@ func ParseTruffleHogFilesystemJSON(values []byte, redactCount int) string {
 	json.Unmarshal(values, &result)
 
 	if len(result.Raw) > redactCount {
-		ret += strings.Replace(strings.TrimSpace((result.Raw[:redactCount])+" <redacted> | "), "\n", "", -1)
+		ret += strings.Replace(strings.TrimSpace((result.Raw[:redactCount]))+" <redacted> | ", "\n", "", -1)
 	} else {
-		ret += strings.Replace(strings.TrimSpace((result.Raw)+" | "), "\n", "", -1)
+		ret += strings.Replace(strings.TrimSpace((result.Raw))+" | ", "\n", "", -1)
 	}
 	ret += result.SM.Dat.Filesystemdata.File + " | "
 	ret += result.DetectorName + " | "
@@ -72,9 +72,9 @@ func ParseTruffleHogGithubJSON(values []byte, redactCount int) string {
 	json.Unmarshal(values, &result)
 
 	if len(result.Raw) > redactCount {
-		ret += strings.Replace(strings.TrimSpace((result.Raw[:redactCount])+" <redacted> | "), "\n", "", -1)
+		ret += strings.Replace(strings.TrimSpace((result.Raw[:redactCount]))+" <redacted> | ", "\n", "", -1)
 	} else {
-		ret += strings.Replace(strings.TrimSpace((result.Raw)+" | "), "\n", "", -1)
+		ret += strings.Replace(strings.TrimSpace((result.Raw))+" | ", "\n", "", -1)
 	}
 	ret += result.SM.Dat.Gitdata.Link + " | "
 	ret += result.DetectorName + " | "
