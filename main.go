@@ -20,7 +20,10 @@ var (
 )
 
 func main() {
-	var parsedValues string
+	var (
+		parsedValues string
+		detectLine   string
+	)
 
 	log.SetLevel(log.ErrorLevel) //ErrorLevel, DebugLevel
 
@@ -47,19 +50,28 @@ func main() {
 			}
 			log.Fatalf("error happened here: %v\n", err)
 		}
+		if len(line) < 50 {
+			return
+		}
+		detectLine = string(line[0:50])
+
 		//rawJson = append(rawJson, line...)
-		if strings.Contains(string(line[0:50]), "{\"commandline\":\"") {
+		if strings.Contains(detectLine, "{\"commandline\":\"") {
 			// Ffuf results
 			parsedValues = parser.ParseFfufJSON(line, removeCount)
 
-		} else if strings.Contains(string(line[0:50]), "{\"SourceMetadata\":{\"Data\":{\"") {
+		} else if strings.Contains(detectLine, "{\"SourceMetadata\":{\"Data\":{\"") {
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error getting current dir: "+err.Error())
 			}
 			// TruffleHog results
-			parsedValues = parser.ParseTruffleHogJSON(line, redactCount)
-		} else {
-			fmt.Println("[-] No supported input type was found (supported: trufflehog-dork, ffuf)")
+			if strings.Contains(detectLine, "{\"SourceMetadata\":{\"Data\":{\"Filesystem\"") {
+				parsedValues = parser.ParseTruffleHogFilesystemJSON(line, redactCount)
+			}
+			if strings.Contains(detectLine, "{\"SourceMetadata\":{\"Data\":{\"Github\"") {
+				parsedValues = parser.ParseTruffleHogGithubJSON(line, redactCount)
+			}
+
 		}
 		if parsedValues != "" {
 			fmt.Println(parsedValues)
