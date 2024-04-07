@@ -28,10 +28,11 @@ func FilterFuzzed(fuzzResults string, removeCount int) []string {
 
 	for _, line := range splittedJson {
 		// line "403 13 http://bestivalvr.redbull.com/HTTPClntRecv/*"
+		// line "403 13 http://bestivalvr.redbull.com/HTTPClntRecv/copy (1)"
 		// remove "  " possible empty slice fields
 		items = RemoveEmpty(strings.Split(line, " "))
-		if len(items) != 3 {
-			log.Error("Substring ' ' occurrs not exactly 2 times in " + line)
+		if len(items) > 3 || len(items) < 2 {
+			log.Error("Substring ' ' occurrs not unsually often/less in " + line)
 			continue
 		}
 		// 403 13
@@ -47,8 +48,8 @@ func FilterFuzzed(fuzzResults string, removeCount int) []string {
 	for _, line := range splittedJson {
 		// remove "  " possible empty slice fields
 		items = RemoveEmpty(strings.Split(line, " "))
-		if len(items) != 3 {
-			log.Error("Substring ' ' occurrs not exactly 2 times in " + line)
+		if len(items) > 3 || len(items) < 2 {
+			log.Error("Substring ' ' occurrs not unsually often/less in " + line)
 			continue
 		}
 		// 403 13
