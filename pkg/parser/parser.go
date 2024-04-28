@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// {"SourceMetadata":{"Data":{"Filesystem":{"file":"/pwd/new_key","line":1}}},"SourceID":1,"SourceType":15,"SourceName":"trufflehog - filesystem","DetectorType":2,"DetectorName":"AWS","DecoderName":"PLAIN","Verified":false,"Raw":"AKIAQYLPMN5HHHFPZAM2","RawV2":"AKIAQYLPMN5HHHFPZAM21tUm636uS1yOEcfP5pvfqJ/ml36mF7AkyHsEU0IU","Redacted":"AKIAQYLPMN5HHHFPZAM2","ExtraData":{"account":"052310077262","resource_type":"Access key"},"StructuredData":null}
+// {"SourceMetadata":{"Data":{"Filesystem":{"file":"/pwd/new_key","line":1}}},"SourceID":1,"SourceType":15,"SourceName":"trufflehog - filesystem","DetectorType":2,"DetectorName":"AWS","DecoderName":"PLAIN","Verified":false,"Raw":"AKIA","RawV2":"AKIA","Redacted":"AKIAQYLPMN5HHHFPZAM2","ExtraData":{"account":"052310077262","resource_type":"Access key"},"StructuredData":null}
 
 func ParseTruffleHogFilesystemJSON(values []byte, redactCount int) string {
 	type Filesystem struct {
