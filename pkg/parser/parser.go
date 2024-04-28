@@ -45,6 +45,46 @@ func ParseTruffleHogFilesystemJSON(values []byte, redactCount int) string {
 	return ret
 }
 
+//{"SourceMetadata":{"Data":{"Postman":{"link":"https://go.postman.co/request/26596579-8627d75c-a9d7-40cd-b755-25f12aac74cb?tab=auth","workspace_uuid":"80818d3f-10ca-4b75-9258-ee3e8f6c8d77","workspace_name":"Tredence Inc","collection_id":"26596579-76acd76d-62b0-4626-bc51-a6145a9735ed","collection_name":"GitHubUsingVariable","environment_id":"26596579-7e39a493-95e4-43b2-9c39-ce0c4606db61","request_id":"8627d75c-a9d7-40cd-b755-25f12aac74cb","request_name":"createRepo","folder_id":"8627d75c-a9d7-40cd-b755-25f12aac74cb","folder_name":"createRepo","field_type":"request\u003e request auth \u003e authorization"}}},"SourceID":1,"SourceType":33,"SourceName":"trufflehog - postman","DetectorType":8,"DetectorName":"Github","DecoderName":"PLAIN","Verified":false,"Raw":"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","RawV2":"","Redacted":"","ExtraData":{"rotation_guide":"https://howtorotate.com/docs/tutorials/github/","version":"2"},"StructuredData":null}
+
+func ParseTruffleHogPostmanJSON(values []byte, redactCount int) string {
+	type Postman struct {
+		Link          string `json:"link"`
+		WorkspaceName string `json:"workspace_name"`
+		WorkspaceUUID string `json:"workspace_uuid"`
+		FieldType     string `json:"field_type"`
+	}
+	type Data struct {
+		Postman Postman `json:"Postman"`
+	}
+	type SourceMetadata struct {
+		Dat Data `json:"Data"`
+	}
+	type TruffleHogResults struct {
+		SM           SourceMetadata `json:"SourceMetadata"`
+		DetectorName string         `json:"DetectorName"`
+		Raw          string         `json:"Raw"`
+	}
+	var (
+		ret    string
+		result TruffleHogResults
+	)
+
+	json.Unmarshal(values, &result)
+
+	if len(result.Raw) > redactCount {
+		ret += strings.Replace(strings.TrimSpace((result.Raw[:redactCount]))+" <redacted> | ", "\n", "", -1)
+	} else {
+		ret += strings.Replace(strings.TrimSpace((result.Raw))+" | ", "\n", "", -1)
+	}
+	ret += result.SM.Dat.Postman.Link + " | "
+	ret += result.DetectorName + " | "
+	ret += result.SM.Dat.Postman.WorkspaceName + " | "
+	ret += " " + result.SM.Dat.Postman.FieldType
+
+	return ret
+}
+
 // {"SourceMetadata":{"Data":{"Github":{"link":"https://github.com/allegro/ralph/issues/2298#issuecomment-299789367","username":"roteme13","repository":"ralph","timestamp":"2017-05-08 07:05:14 +0000 UTC"}}},"SourceID":1,"SourceType":7,"SourceName":"trufflehog - github","DetectorType":901,"DetectorName":"LDAP","DecoderName":"PLAIN","Verified":false,"Raw":"ldap://dc.com:389\tgivenName\t1234567","RawV2":"","Redacted":"","ExtraData":null,"StructuredData":null}
 
 func ParseTruffleHogGithubJSON(values []byte, redactCount int) string {

@@ -71,7 +71,9 @@ func main() {
 			if strings.Contains(detectLine, "{\"SourceMetadata\":{\"Data\":{\"Github\"") {
 				parsedValues = parser.ParseTruffleHogGithubJSON(line, redactCount)
 			}
-
+			if strings.Contains(detectLine, "{\"SourceMetadata\":{\"Data\":{\"Postman\"") {
+				parsedValues = parser.ParseTruffleHogPostmanJSON(line, redactCount)
+			}
 		}
 		if parsedValues != "" {
 			fmt.Println(parsedValues)
