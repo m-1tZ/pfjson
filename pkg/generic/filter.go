@@ -48,7 +48,7 @@ func FilterFuzzed(fuzzResults string, removeCount int) []string {
 	for _, line := range splittedJson {
 		// remove "  " possible empty slice fields
 		items = RemoveEmpty(strings.Split(line, " "))
-		if len(items) > 3 || len(items) < 2 {
+		if len(items) > 4 || len(items) < 2 {
 			log.Error("Substring ' ' occurrs not unsually often/less in " + line)
 			continue
 		}
