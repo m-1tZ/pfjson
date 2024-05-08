@@ -31,7 +31,7 @@ func FilterFuzzed(fuzzResults string, removeCount int) []string {
 		// line "403 13 http://bestivalvr.redbull.com/HTTPClntRecv/copy (1)"
 		// remove "  " possible empty slice fields
 		items = RemoveEmpty(strings.Split(line, " "))
-		if len(items) > 3 || len(items) < 2 {
+		if len(items) > 4 || len(items) < 2 {
 			log.Error("Substring ' ' occurrs not unsually often/less in " + line)
 			continue
 		}
